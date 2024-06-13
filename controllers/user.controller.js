@@ -1,155 +1,132 @@
 const User = require('../models/user.model');
-const uuid = require('uuid');
-const Movie = require('../models/movie.model');
+const { v4: uuidv4 } = require('uuid');
+const TokenGenerator = require('uuid-token-generator');
+const tokgen = new TokenGenerator(); 
 
-// SignUp function
-exports.signUp = async (req, res) => {
-    if (!req.body.username || !req.body.password) {
-        return res.status(400).send({ message: "Content cannot be empty!" });
-    }
+// signUp() - to create a USER object and save it in USER schema
+const signUp = async (req, res) => {
+  const { first_name, last_name ,email_address,password,mobile_number} = req.body;
 
-    // Create a User
+
+  const uuid = uuidv4();
+  const accessToken =  tokgen.generate();
+
+
+  try {
     const user = new User({
-        email: req.body.email,
-        first_name: req.body.first_name,
-        last_name: req.body.last_name,
-        username: `${req.body.first_name}${req.body.last_name}`,
-        contact: req.body.contact,
-        password: req.body.password,
-        role: req.body.role || "user", 
-        isLoggedIn: false,
-        uuid: uuid.v4(), 
-        accesstoken: "",
-        coupens: req.body.coupens || [],
-        bookingRequests: req.body.bookingRequests || []
+      first_name: first_name,
+      last_name: last_name,
+      userid: first_name+last_name,   
+      email: email_address,
+      contact: mobile_number,
+      password: password,
+      uuid: uuid,
+      accesstoken: accessToken,
+      isLoggedIn: true,
     });
 
-    // Saving the new user in schema
-    try {
-        const data = await user.save();
-        res.send(data);
-    } catch (error) {
-        res.status(500).send({
-            message: error.message || "Some error occurred while creating the User."
-        });
-    }
+   const newUser =  await user.save();
+
+    res.status(201).send(newUser); 
+  } catch (error) {
+    res.status(500).send({ error: 'Failed to create user',  details: error.message });
+  }
 };
 
-// Login Function
-exports.login = async (req, res) => {
-    try {
-        const user = await User.findOne({
-            username: `${req.body.first_name}${req.body.last_name}`,
-            password: req.body.password
-        });
-        if (!user) {
-            return res.status(404).send({ message: "Invalid username or password!" });
-        }
-        user.isLoggedIn = true;
-        user.accesstoken = uuid.v4();
-        await user.save();
-        res.send({ message: "Login successful!", user });
-    } catch (error) {
-        res.status(500).send({
-            message: "Error during login"
-        });
-    }
-};
+// login function to check if details are in schema
+const login = async (req, res) => {
+  const { username, password, accessToken } = req.body;
 
-// Logout function
-exports.logout = async (req, res) => {
-    try {
-        const user = await User.findByIdAndUpdate(req.body.userid, {
-            isLoggedIn: false,
-            accesstoken: ""
-        }, { new: true });
-        if (!user) {
-            return res.status(404).send({ message: "User not found." });
-        }
-        res.send({ message: "Logged out successfully!" });
-    } catch (error) {
-        res.status(500).send({
-            message: "Error logging out"
-        });
-    }
-};
+  try {
+    const user = await User.findOne({ username });  // Find the user by username
 
-// Get Coupon Code function
-
-exports.getCouponCode = async (req, res) => {
-    try {
-        const user = await User.findById(req.body.userid);
-        if (!user) {
-            return res.status(404).send({ message: "User not found." });
-        }
-        res.send(user.coupens);
-    } catch (error) {
-        res.status(500).send({
-            message: "Error retrieving coupon codes for user with ID " + req.body.userid
-        });
+    if (!user) {
+      return res.status(401).send({ error: 'Invalid username or password' });  // User not found
     }
+
+    console.log(user);
+
+    if (user.password !== password) {
+      return res.status(401).send({ error: 'Invalid username or password' });  // Password is wrong
+    }
+
+    if (user.accessToken !== accessToken) {
+      return res.status(401).send({ error: 'Error Logging in.' });  // Access token is wrong
+    }
+    
+    res.send(user);  // Sending user to db
+  } catch (error) {
+    console.error('Login Error:', error);
+    res.status(500).send({ error: 'Internal server error',  details: error.message});
+  }
+}
+
+
+const logout = async (req, res) => {
+const {uuid} = req.body;
+try {
+    const user = await User.findOne({uuid});
+
+    if (!user) {
+      return res.status(404).send({ error: 'User not found' });
+    }
+    user.isLoggedIn = false;
+    await user.save();
+
+    res.status(200).send({ message: 'Logged Out successfully.' });
+  } catch (error) {
+    console.log(error);
+    res.status(500).send({ error: 'Failed to log out' });
+  }
 };
 
 
-// Get Coupon Code function
-exports.getCouponCode = async (req, res) => {
+// Function to get coupon codes from the User model
+const getCouponCodes = async (req, res) => {
     try {
-        const user = await User.findById(req.body.userid);
-        if (!user) {
-            return res.status(404).send({ message: "User not found." });
-        }
-        res.send(user.coupens);
+      const userId = req.params.userId; // Assuming you have the userId as a parameter
+  
+      // Retrieve the User document by userId
+      const user = await User.find({userid : userId});
+  
+      if (!user) {
+        return res.status(404).send({ error: 'User not found' });
+      }
+  
+      // Extract the coupon codes from the user document
+      const couponCodes = user.coupens;
+  
+      res.status(200).send(couponCodes);
     } catch (error) {
-        res.status(500).send({
-            message: "Error retrieving coupon codes for user with ID " + req.body.userid
-        });
+      res.status(500).send({ error: 'Failed to fetch coupon codes' });
     }
-};
+  };
 
-exports.bookShow = async (req, res) => {
+
+  const bookShow = async (req, res) => {
+    
+    const {customerUuid , bookingRequest} = req.body;
+    console.log(bookingRequest);
     try {
-        // Find the user
-        const user = await User.findById(req.body.userid);
-        if (!user) {
-            return res.status(404).send({ message: "User not found." });
-        }
+      const user = await User.findOne({uuid : customerUuid});
+  
+      if (!user) {
+        return res.status(404).send({ error: 'User not found' });
+      }
+     
+      console.log(user);
 
-        // Find the movie that contains the show
-        const movie = await Movie.findOne({ "shows.id": req.body.show_id });
-        if (!movie) {
-            return res.status(404).send({ message: "Show not found." });
-        }
-
-        // Extract the specific show from the movie's shows array
-        const show = movie.shows.find(show => show.id === req.body.show_id);
-        if (!show) {
-            return res.status(404).send({ message: "Show not found in movie." });
-        }
-
-        // Assume a check here for available seats and other validations
-        if (show.available_seats < req.body.tickets.length) {
-            return res.status(400).send({ message: "Not enough seats available." });
-        }
-
-        // Update the available seats
-        show.available_seats -= req.body.tickets.length;
-
-        // Add to user's booking requests
-        user.bookingRequests.push({
-            reference_number: Math.floor(Math.random() * 1000000),
-            coupon_code: req.body.coupon_code,
-            show_id: req.body.show_id,
-            tickets: req.body.tickets
-        });
-
-        // Save updates to both user and movie
-        await user.save();
-        await movie.save();
-
-        res.send({ message: "Show booked successfully!", bookingDetails: user.bookingRequests.slice(-1)[0] });
+      // Add the booking request to the user's bookingRequests array
+       user.bookingRequests.push(bookingRequest);
+  
+      // Save the updated user document
+      await user.save();
+  
+      res.status(201).send({ message: 'Show booked successfully' });
     } catch (error) {
-        res.status(500).send({
-            message: "Error booking show for user with ID " + req.body.userid
-        });
+      console.log(error);
+      res.status(500).send({ error: 'Failed to book show' });
     }
-};
+  };
+
+module.exports = {signUp,login,logout,getCouponCodes,bookShow}

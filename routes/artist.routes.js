@@ -1,7 +1,9 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const artistsController = require('../controllers/artist.controller');
+const artistsController = require("../controllers/artist.controller");
+const bodyParser = require("body-parser");
 
-router.get('/artists', artistsController.findAllArtists);
+router.use(bodyParser.json());
+router.get("/", artistsController.findAllArtists);
 
 module.exports = router;

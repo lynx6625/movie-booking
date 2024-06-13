@@ -41,21 +41,21 @@ class BookShow extends Component {
         let xhrShows = new XMLHttpRequest();
         xhrShows.addEventListener("readystatechange", (function () {
             if (xhrShows.readyState === 4) {
-                debugger;
-                let response = JSON.parse(xhrShows.responseText)[0];
+                let response = JSON.parse(xhrShows.responseText);
                 this.setState({ originalShows: response.shows });
+            
                 let newLocations = [];
 
                 for (let show of response.shows) {
                     newLocations.push({ id: show.theatre.city, location: show.theatre.city });
                 }
-
+                
                 newLocations = newLocations.filter((loc, index, self) =>
                     index === self.findIndex((c) => (
                         c.id === loc.id
                     ))
                 )
-
+                
                 this.setState({ locations: newLocations })
             }
         }).bind(this));
@@ -66,7 +66,6 @@ class BookShow extends Component {
     }
 
     locationChangeHandler = ((event) => {
-        debugger;
         this.setState({ location: event.target.value });
         let newTheatres = [];
 
@@ -75,13 +74,14 @@ class BookShow extends Component {
                 newTheatres.push({ id: show.theatre.name, theatre: show.theatre.name });
             }
         }
-
+        console.log(newTheatres);
+       
         newTheatres = newTheatres.filter((theatre, index, self) =>
             index === self.findIndex((t) => (
                 t.id === theatre.id
             ))
         )
-
+        
         this.setState({ theatres: newTheatres });
     }).bind(this);
 
@@ -134,7 +134,6 @@ class BookShow extends Component {
             if (show.theatre.city === this.state.location && show.theatre.name === this.state.theatre && show.language === this.state.language && show.show_timing === event.target.value) {
                 unitPrice = show.unit_price;
                 availableTickets = show.available_seats;
-                debugger;
                 this.setState({ showId: show.id });
             }
         }
@@ -143,7 +142,8 @@ class BookShow extends Component {
     }).bind(this);
 
     ticketsChangeHandler = ((event) => {
-        this.setState({ tickets: event.target.value.split(",") });
+        console.log( event.target.value);
+        this.setState({ tickets: event.target.value });
     }).bind(this);
 
     bookShowButtonHandler = (() => {
@@ -154,7 +154,6 @@ class BookShow extends Component {
         this.state.tickets === 0 ? this.setState({ reqTickets: "dispBlock" }) : this.setState({ reqTickets: "dispNone" });
 
         if ((this.state.location === "") || (this.state.theatre === "") || (this.state.language === "") || (this.state.showDate === "") || (this.state.tickets === 0)) { return; }
-        debugger;
         this.props.history.push({
             pathname: '/confirm/' + this.props.match.params.id,
             bookingSummary: this.state
@@ -182,7 +181,7 @@ class BookShow extends Component {
                                     value={this.state.location}
                                     onChange={this.locationChangeHandler}
                                 >
-                                    {this.state.locations.map(loc => (
+                                    {this.state.locations!==0 && this.state.locations.map(loc => (
                                         <MenuItem key={"loc" + loc.id} value={loc.location}>
                                             {loc.location}
                                         </MenuItem>
@@ -199,7 +198,7 @@ class BookShow extends Component {
                                     value={this.state.theatre}
                                     onChange={this.theatreChangeHandler}
                                 >
-                                    {this.state.theatres.map(th => (
+                                    {this.state.theatres!==0 && this.state.theatres.map(th => (
                                         <MenuItem key={"theatre" + th.id} value={th.theatre}>
                                             {th.theatre}
                                         </MenuItem>
@@ -216,7 +215,7 @@ class BookShow extends Component {
                                     value={this.state.language}
                                     onChange={this.languageChangeHandler}
                                 >
-                                    {this.state.languages.map(lang => (
+                                    {this.state.languages!==0 && this.state.languages.map(lang => (
                                         <MenuItem key={"lang" + lang.id} value={lang.language}>
                                             {lang.language}
                                         </MenuItem>
@@ -233,11 +232,11 @@ class BookShow extends Component {
                                     value={this.state.showDate}
                                     onChange={this.showDateChangeHandler}
                                 >
-                                    {this.state.showDates.map(sd => (
+                                    {this.state.showDates  !== 0 &&  this.state.showDates.map(sd => (
                                         <MenuItem key={"showDate" + sd.id} value={sd.showDate}>
                                             {sd.showDate}
                                         </MenuItem>
-                                    ))}
+                                    ))}  
                                 </Select>
                                 <FormHelperText className={this.state.reqShowDate}>
                                     <span className="red">Required</span>
@@ -246,7 +245,7 @@ class BookShow extends Component {
                             <br /><br />
                             <FormControl required className="formControl">
                                 <InputLabel htmlFor="tickets">Seat Selection: ( {this.state.availableTickets} available )</InputLabel>
-                                <Input id="tickets" value={this.state.tickets !== 0 ? this.state.tickets : ""} onChange={this.ticketsChangeHandler} />
+                                <Input id="tickets" value={this.state.tickets} onChange={this.ticketsChangeHandler} />
                                 <FormHelperText className={this.state.reqTickets}>
                                     <span className="red">Required</span>
                                 </FormHelperText>
@@ -257,7 +256,7 @@ class BookShow extends Component {
                             </Typography>
                             <br />
                             <Typography>
-                                Total Price: Rs. {this.state.unitPrice * this.state.tickets.length}
+                                Total Price: Rs. {this.state.unitPrice * this.state.tickets}
                             </Typography>
                             <br /><br />
                             <Button variant="contained" onClick={this.bookShowButtonHandler} color="primary">

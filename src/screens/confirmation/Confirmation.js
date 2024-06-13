@@ -43,31 +43,32 @@ class Confirmation extends Component {
 
   componentDidMount() {
     let currentState = this.state;
-    currentState.totalPrice = currentState.originalTotalPrice = parseInt(this.props.location.bookingSummary.unitPrice, 10) * parseInt(this.props.location.bookingSummary.tickets.length, 10);
+    currentState.totalPrice = currentState.originalTotalPrice = parseInt(this.props.location.bookingSummary.unitPrice, 10) * parseInt(this.props.location.bookingSummary.tickets, 10);
     this.setState({ state: currentState });
-    debugger;
   }
 
   confirmBookingHandler = () => {
-    console.log(this.props.location.bookingSummary.showId);
+    console.log(this.props.location.bookingSummary && this.props.location.bookingSummary.showId);
     let data = JSON.stringify({
       "customerUuid": sessionStorage.getItem('uuid'),
       "bookingRequest": {
         "coupon_code": this.state.couponCode,
-        "show_id": this.props.location.bookingSummary.showId,
+        "reference_number" : this.props.reference_number,
+        "show_id": this.props.location.bookingSummary && this.props.location.bookingSummary.showId,
         "tickets": [
-          this.props.location.bookingSummary.tickets.toString()
+          this.props.location.bookingSummary && this.props.location.bookingSummary.tickets.toString()
         ]
       }
     });
-
+console.log(data);
     let that = this;
     let xhr = new XMLHttpRequest();
 
     xhr.addEventListener("readystatechange", function () {
       if (this.readyState === 4) {
-        debugger;
-        that.setState({ bookingId: JSON.parse(this.responseText).reference_number });
+        const response = this.responseText
+        console.log(response);
+        that.setState({ bookingId: JSON.parse(this.responseText)});
       }
     });
 
@@ -77,8 +78,7 @@ class Confirmation extends Component {
     xhr.setRequestHeader("Content-Type", "application/json");
     
     console.log(data);
-    debugger;
-    xhr.send(data);
+    xhr.json(data);
 
     this.setState({ open: true });
   }
@@ -100,7 +100,6 @@ class Confirmation extends Component {
     xhr.addEventListener("readystatechange", function () {
       if (this.readyState === 4) {
         let currentState = that.state;
-        debugger;
         var obj = JSON.parse(this.responseText);
         let discountValue = obj.discountValue;
         
@@ -108,7 +107,7 @@ class Confirmation extends Component {
           currentState.totalPrice = that.state.originalTotalPrice - ((that.state.originalTotalPrice * discountValue) / 100);
           that.setState({ currentState });
         } else {
-          currentState.totalPrice = that.state.originalTotalPrice;
+          currentState.totalPrice = that.state.originalTotalPrice * 4;
           that.setState({ currentState });
         }
       }
@@ -149,7 +148,7 @@ class Confirmation extends Component {
                     <Typography>Location:</Typography>
                   </div>
                   <div>
-                    <Typography>{this.props.location.bookingSummary.location}</Typography>
+                    <Typography>{this.props.location.bookingSummary && this.props.location.bookingSummary.location}</Typography>
                   </div>
                 </div>
                 <br />
@@ -159,7 +158,7 @@ class Confirmation extends Component {
                     <Typography>Theatre:</Typography>
                   </div>
                   <div>
-                    <Typography>{this.props.location.bookingSummary.theatre}</Typography>
+                    <Typography>{this.props.location.bookingSummary && this.props.location.bookingSummary.theatre}</Typography>
                   </div>
                 </div>
                 <br />
@@ -169,7 +168,7 @@ class Confirmation extends Component {
                     <Typography>Language:</Typography>
                   </div>
                   <div>
-                    <Typography>{this.props.location.bookingSummary.language}</Typography>
+                    <Typography>{this.props.location.bookingSummary && this.props.location.bookingSummary.language}</Typography>
                   </div>
                 </div>
                 <br />
@@ -179,7 +178,7 @@ class Confirmation extends Component {
                     <Typography>Show Date:</Typography>
                   </div>
                   <div>
-                    <Typography>{this.props.location.bookingSummary.showDate}</Typography>
+                    <Typography>{this.props.location.bookingSummary && this.props.location.bookingSummary.showDate}</Typography>
                   </div>
                 </div>
                 <br />
@@ -189,7 +188,7 @@ class Confirmation extends Component {
                     <Typography>Tickets:</Typography>
                   </div>
                   <div>
-                    <Typography>{this.props.location.bookingSummary.tickets.toString()}</Typography>
+                    <Typography>{this.props.location.bookingSummary && this.props.location.bookingSummary.tickets.toString()}</Typography>
                   </div>
                 </div>
                 <br />
@@ -199,7 +198,7 @@ class Confirmation extends Component {
                     <Typography>Unit Price:</Typography>
                   </div>
                   <div>
-                    <Typography>{this.props.location.bookingSummary.unitPrice}</Typography>
+                    <Typography>{this.props.location.bookingSummary && this.props.location.bookingSummary.unitPrice}</Typography>
                   </div>
                 </div>
                 <br />

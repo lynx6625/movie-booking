@@ -103,7 +103,7 @@ class Header extends Component {
                 sessionStorage.setItem("uuid", JSON.parse(this.responseText).id);
                 //sessionStorage.setItem("access-token", xhrLogin.getResponseHeader("access-token"));
 
-                if(xhrLogin.getResponseHeader("access-token") == null)
+                if(xhrLogin.getResponseHeader("access-token") === null)
                 {
                     sessionStorage.setItem("access-token", JSON.parse(this.responseText)["access-token"]);
                 }
@@ -158,7 +158,7 @@ class Header extends Component {
             }
         });
 
-        xhrSignup.open("POST", this.props.baseUrl + "auth/signup");
+        xhrSignup.open("POST", this.props.baseUrl + "auth/signup", true);
         xhrSignup.setRequestHeader("Content-Type", "application/json");
         xhrSignup.setRequestHeader("Cache-Control", "no-cache");
         xhrSignup.send(dataSignup);
@@ -196,13 +196,15 @@ class Header extends Component {
         let that = this;
         xhrSignout.addEventListener("readystatechange", function () {
             if (this.readyState === 4) {
-                if(JSON.parse(this.responseText).message == "Logged Out successfully.")
+                if(JSON.parse(this.responseText).message === "Logged Out successfully.")
                 {
                     sessionStorage.removeItem("uuid");
                     sessionStorage.removeItem("access-token");
 
                     that.setState({
                         loggedIn: false
+                    }, () => {
+                        this.props.history.push('/');
                     });
                 }
             }

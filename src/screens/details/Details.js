@@ -52,9 +52,8 @@ class Details extends Component {
         let xhrMovie = new XMLHttpRequest();
         xhrMovie.addEventListener("readystatechange", function () {
             if (this.readyState === 4) {
-                debugger;
                 that.setState({
-                    movie: JSON.parse(this.responseText)[0]
+                    movie: JSON.parse(this.responseText)
                 });
             }
         });
@@ -103,37 +102,37 @@ class Details extends Component {
                 </div>
                 <div className="flex-containerDetails">
                     <div className="leftDetails">
-                        <img src={movie.poster_url} alt={movie.title} />
+                        <img src={ movie ?  movie.poster_url :""} alt={movie ? movie.title : ""} />
                     </div>
 
                     <div className="middleDetails">
                         <div>
-                            <Typography variant="headline" component="h2">{movie.title} </Typography>
+                            <Typography variant="headline" component="h2">{movie ? movie.title: ""} </Typography>
                         </div>
                         <br />
                         <div>
                             <Typography>
-                                <span className="bold">Genres: </span> {movie.genres.join(', ')}
+                                <span className="bold">Genres: </span> {movie ? movie.genres.join(', '): null}
                             </Typography>
                         </div>
                         <div>
-                            <Typography><span className="bold">Duration:</span> {movie.duration} </Typography>
+                            <Typography><span className="bold">Duration:</span> {movie ? movie.duration : ""} </Typography>
                         </div>
                         <div>
-                            <Typography><span className="bold">Release Date:</span> {new Date(movie.release_date).toDateString()} </Typography>
+                            <Typography><span className="bold">Release Date:</span> {movie ?  new Date(movie.release_date).toDateString() : ""} </Typography>
                         </div>
                         <div>
-                            <Typography><span className="bold"> Rating:</span> {movie.critics_rating}  </Typography>
+                            <Typography><span className="bold"> Rating:</span> {movie ?  movie.critics_rating: ""}  </Typography>
                         </div>
                         <div className="marginTop16">
-                            <Typography><span className="bold">Plot:</span> <a href={movie.wiki_url}>(Wiki Link)</a> {movie.storyline} </Typography>
+                            <Typography><span className="bold">Plot:</span> <a href={movie ?  movie.wiki_url : ""} >(Wiki Link)</a> {movie ? movie.storyline : ""} </Typography>
                         </div>
                         <div className="trailerContainer">
                             <Typography>
                                 <span className="bold">Trailer:</span>
                             </Typography>
                             <YouTube
-                                videoId={movie.trailer_url.split("?v=")[1]}
+                                videoId={movie ?  movie.trailer_url.split("?v=")[1] : ""}
                                 opts={opts}
                                 onReady={this._onReady}
                             />
@@ -159,7 +158,7 @@ class Details extends Component {
                         </div>
                         <div className="paddingRight">
                             <GridList cellHeight={160} cols={2}>
-                                {movie.artists != null && movie.artists.map(artist => (
+                                {movie && movie.artists != null && movie.artists.map(artist => (
                                     <GridListTile
                                         className="gridTile"
                                         onClick={() => this.artistClickHandler(artist.wiki_url)}
